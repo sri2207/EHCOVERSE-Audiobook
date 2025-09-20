@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Audiobooks - EchoVerse</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .file-item {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+        .file-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9em;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back to EchoVerse</a>
+    
+    <div class="header">
+        <h1>Generated Audiobooks</h1>
+        <p>Manage and download your created audiobooks</p>
+    </div>
+    
+    {% if audio_files %}
+        <div class="file-grid">
+            {% for file in audio_files %}
+            <div class="file-item" data-filename="{{ file.filename }}">
+                <div class="file-name">{{ file.filename }}</div>
+                <div class="file-meta">
+                    <div>Size: {{ file.size }}</div>
+                    <div>Created: {{ file.created }}</div>
+                </div>
+                <div class="file-actions">
+                    <a href="/api/download/{{ file.filename }}" class="btn btn-primary" download>Download</a>
+                    <button class="btn btn-secondary" onclick="playAudio('{{ file.filename }}')">Play</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h2>No Audiobooks Found</h2>
+            <p>You haven't generated any audiobooks yet.</p>
+            <a href="/" class="btn btn-primary">Create Your First Audiobook</a>
+        </div>
+    {% endif %}
+    
+    <audio id="audioPlayer" controls style="width: 100%; margin-top: 20px; display: none;">
+        Your browser does not support the audio element.
+    </audio>
+    
+    <script>
+        function playAudio(filename) {
+            const audioPlayer = document.getElementById('audioPlayer');
+            const audioUrl = '/api/download/' + encodeURIComponent(filename);
+            
+            audioPlayer.src = audioUrl;
+            audioPlayer.style.display = 'block';
+            
+            // Attempt to play
+            audioPlayer.play()
+                .then(() => {
+                    console.log('Audio is playing...');
+                })
+                .catch(error => {
+                    console.error('Error playing audio:', error);
+                    alert('Error playing audio: ' + error.message);
+                });
+        }
+    </script>
+</body>
+</html>

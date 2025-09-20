@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EchoVerse Translation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>EchoVerse Translation Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Translation Endpoint</h2>
+        <textarea id="testText">Hello, how are you today? This is a test of the EchoVerse translation system.</textarea>
+        <label for="targetLang">Target Language:</label>
+        <select id="targetLang">
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+        </select>
+        <br><br>
+        <button onclick="testTranslation()">Test Translation</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testTranslation() {
+            const text = document.getElementById('testText').value;
+            const targetLang = document.getElementById('targetLang').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '<p>Testing translation...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        target_language: targetLang
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        resultDiv.innerHTML = `
+                            <div class="test-section success">
+                                <h3>Translation Successful!</h3>
+                                <p><strong>Original:</strong> ${text}</p>
+                                <p><strong>Translated:</strong> ${data.translated_text}</p>
+                                <p><strong>Source Language:</strong> ${data.source_language}</p>
+                                <p><strong>Target Language:</strong> ${data.target_language}</p>
+                                <p><strong>Confidence:</strong> ${data.confidence}</p>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `<div class="test-section error"><h3>Translation Failed</h3><p>${data.error}</p></div>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="test-section error"><h3>HTTP Error</h3><p>Status: ${response.status}</p></div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="test-section error"><h3>Connection Error</h3><p>${error.message}</p></div>`;
+            }
+        }
+    </script>
+</body>
+</html>

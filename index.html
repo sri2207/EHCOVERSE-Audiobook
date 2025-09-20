@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Enhanced Audiobook Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .naturalness-controls {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        .ai-chat {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .emotion-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin: 5px;
+            color: white;
+        }
+        .emotion-excitement { background: #ff6b6b; }
+        .emotion-sadness { background: #4ecdc4; }
+        .emotion-mystery { background: #45b7d1; }
+        .emotion-neutral { background: #95a5a6; }
+        .voice-clone-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .author-only {
+            display: none;
+        }
+        .chat-messages {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background: #e3f2fd;
+            text-align: right;
+        }
+        .ai-message {
+            background: #f1f8e9;
+        }
+    </style>
+</head>
+<body data-is-author="{{ 'true' if is_author else 'false' }}">
+    <div class="container">
+        <header>
+            <h1>🤖📚 AI-Enhanced Audiobook Generator</h1>
+            <p>Convert documents to natural-sounding audiobooks with AI storytelling assistance</p>
+            {% if not is_author %}
+                <div class="auth-notice">
+                    <small>📝 <a href="#" onclick="showLogin()">Login as Author</a> for voice cloning features</small>
+                </div>
+            {% else %}
+                <div class="author-welcome">
+                    <small>👑 Welcome, Author! You have access to voice cloning features. <a href="#" onclick="logout()">Logout</a></small>
+                </div>
+            {% endif %}
+        </header>
+
+        <div class="upload-section">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" name="file" accept=".txt,.pdf,.docx" required>
+                    <label for="fileInput" class="file-input-label">
+                        <span class="file-icon">📄</span>
+                        <span class="file-text">Choose a file (TXT, PDF, DOCX)</span>
+                    </label>
+                </div>
+
+                <!-- Natural Voice Enhancement Controls -->
+                <div class="naturalness-controls">
+                    <h3>🎭 Voice Enhancement Options</h3>
+                    
+                    <div class="setting-group">
+                        <label for="enableAIFeatures">
+                            <input type="checkbox" id="enableAIFeatures" name="enable_ai_features" checked>
+                            <strong>Enable AI Features</strong>
+                        </label>
+                        <small>Story analysis, emotion detection, and intelligent Q&A system</small>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="enableNaturalness">
+                            <input type="checkbox" id="enableNaturalness" name="enable_naturalness" checked>
+                            <strong>Enable Voice Naturalness</strong>
+                        </label>
+                        <small>Automatically detects emotions and adjusts voice tone and pace</small>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="continuousFlow">
+                            <input type="checkbox" id="continuousFlow" name="continuous_flow" checked>
+                            <strong>Continuous Flow Speech</strong>
+                        </label>
+                        <small>Natural, conversational flow without formal pauses or breaks</small>
+                    </div>
+                    
+                    <div id="emotionPreview" class="emotion-preview" style="display: none;">
+                        <strong>Detected Emotion:</strong>
+                        <span id="emotionIndicator" class="emotion-indicator emotion-neutral">Analyzing...</span>
+                        <span id="intensityLevel">Intensity: 0.0</span>
+                    </div>
+                </div>
+
+                <div class="settings">
+                    <div class="setting-group">
+                        <label for="voiceRate">Voice Speed:</label>
+                        <input type="range" id="voiceRate" name="voice_rate" min="120" max="220" value="175">
+                        <span id="rateValue">175</span> WPM
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="voiceVolume">Voice Volume:</label>
+                        <input type="range" id="voiceVolume" name="voice_volume" min="0.1" max="1.0" step="0.1" value="0.9">
+                        <span id="volumeValue">0.9</span>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="voiceSelectionMode">Voice Selection:</label>
+                        <select id="voiceSelectionMode" name="voice_selection_mode">
+                            <option value="character">Character Types</option>
+                            <option value="specific">Specific Voices</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group" id="characterVoiceGroup">
+                        <label for="voiceType">Voice Personality:</label>
+                        <select id="voiceType" name="voice_type">
+                            <optgroup label="🎆 Classic Voices">
+                                <option value="female_warm" selected>🌿 Warm & Caring - Perfect for emotional stories</option>
+                                <option value="male_deep">🎭 Deep & Rich - Perfect for dramatic narratives</option>
+                            </optgroup>
+                            <optgroup label="🌈 Personality Voices">
+                                <option value="cheerful_energetic">✨ Cheerful & Energetic - Bubbly, joyful storytelling</option>
+                                <option value="calm_meditative">🧘 Calm & Meditative - Peaceful, relaxing voice</option>
+                                <option value="adventurous_explorer">🏔️ Adventurous Explorer - Dynamic, travel-ready</option>
+                                <option value="mysterious_storyteller">🌙 Mysterious Storyteller - Enigmatic, thrilling</option>
+                                <option value="romantic_dreamer">💕 Romantic Dreamer - Soft, tender, emotional</option>
+                                <option value="wise_mentor">📚 Wise Mentor - Educational, thoughtful guidance</option>
+                                <option value="playful_comedian">🎭 Playful Comedian - Fun, humorous, entertaining</option>
+                                <option value="confident_leader">💪 Confident Leader - Strong, motivational voice</option>
+                            </optgroup>
+                            <optgroup label="🌍 Specialty Voices">
+                                <option value="gentle_healer">🌱 Gentle Healer - Therapeutic, soothing wellness</option>
+                                <option value="curious_scientist">🔬 Curious Scientist - Analytical, educational content</option>
+                                <option value="passionate_artist">🎨 Passionate Artist - Creative, expressive artistry</option>
+                                <option value="street_smart">🏙️ Street Smart - Cool, urban, contemporary</option>
+                                <option value="nature_lover">🌳 Nature Lover - Earthy, environmental themes</option>
+                                <option value="tech_enthusiast">📱 Tech Enthusiast - Modern, sci-fi, innovation</option>
+                                <option value="spiritual_guide">✨ Spiritual Guide - Philosophical, transcendent</option>
+                                <option value="rebel_activist">✊ Rebel Activist - Bold, change-inspiring voice</option>
+                                <option value="dreamy_poet">🌸 Dreamy Poet - Lyrical, beautiful, artistic</option>
+                                <option value="friendly_neighbor">🏠 Friendly Neighbor - Warm, coffee-chat voice</option>
+                                <option value="cosmic_explorer">🌌 Cosmic Explorer - Expansive, space adventures</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group" id="specificVoiceGroup" style="display: none;">
+                        <label for="voiceId">System Voice:</label>
+                        <select id="voiceId" name="voice_id">
+                            <option value="">Loading voices...</option>
+                        </select>
+                        <button type="button" id="refreshVoices" class="refresh-btn" title="Refresh available voices">
+                            🔄
+                        </button>
+                    </div>
+                    
+                    <!-- Voice Cloning Section (Authors Only) -->
+                    <div class="voice-clone-section author-only">
+                        <h4>🎤 Voice Cloning (Author Only)</h4>
+                        <div class="setting-group">
+                            <label for="voiceSample">Upload Voice Sample:</label>
+                            <input type="file" id="voiceSample" accept=".wav,.mp3,.flac,.m4a">
+                            <button type="button" id="uploadSampleBtn" class="preview-btn">Upload Sample</button>
+                        </div>
+                        <div id="voiceSamples">
+                            <small>Upload a 30-60 second audio sample to create your custom voice</small>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="enableTranslation">Auto Translation:</label>
+                        <div class="translation-toggle">
+                            <input type="checkbox" id="enableTranslation" name="enable_translation" checked>
+                            <label for="enableTranslation" class="toggle-label">Auto-translate files to target language</label>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group" id="translationGroup">
+                        <label for="targetLanguage">Target Language:</label>
+                        <select id="targetLanguage" name="target_language">
+                            <option value="en" selected>🇺🇸 English (Default)</option>
+                            <option value="auto">🌍 Keep original language</option>
+                            <optgroup label="🌍 Popular Languages">
+                                <option value="es">🇪🇸 Spanish</option>
+                                <option value="fr">🇫🇷 French</option>
+                                <option value="de">🇩🇪 German</option>
+                                <option value="it">🇮🇹 Italian</option>
+                                <option value="pt">🇵🇹 Portuguese</option>
+                                <option value="ru">🇷🇺 Russian</option>
+                                <option value="ja">🇯🇵 Japanese</option>
+                                <option value="ko">🇰🇷 Korean</option>
+                                <option value="zh">🇨🇳 Chinese (Simplified)</option>
+                                <option value="ar">🇸🇦 Arabic</option>
+                                <option value="hi">🇮🇳 Hindi</option>
+                                <option value="ta">🇮🇳 Tamil</option>
+                            </optgroup>
+                        </select>
+                        <button type="button" id="detectLangBtn" class="detect-btn" title="Detect document language">
+                            🔍
+                        </button>
+                    </div>
+                    
+                    <div class="voice-preview">
+                        <small id="voiceDescription">🌿 Warm, natural female voice perfect for emotional storytelling, novels, and intimate narratives</small>
+                        <button type="button" id="previewBtn" class="preview-btn">
+                            🔊 Preview Voice
+                        </button>
+                        <audio id="previewPlayer" style="display: none;" controls>
+                            Your browser does not support audio playback.
+                        </audio>
+                    </div>
+                </div>
+
+                <button type="submit" class="upload-btn" id="uploadBtn">
+                    <span class="btn-text">Generate AI-Enhanced Audiobook</span>
+                    <span class="spinner" id="spinner"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- AI Story Analysis & Chat Section (Conditional) -->
+        <div id="aiSection" class="ai-chat" style="display: none;">
+            <h3>🤖 AI Story Assistant <small>(Optional - Toggle in settings)</small></h3>
+            <div id="aiDisabledMessage" class="auth-notice" style="display: none;">
+                <p>📝 AI features are currently disabled. Enable them in the voice enhancement options above to access story analysis and intelligent Q&A.</p>
+            </div>
+            
+            <div id="aiEnabledContent">
+                <div id="storyAnalysis" class="story-analysis">
+                    <h4>📊 Story Analysis</h4>
+                    <div id="analysisResults"></div>
+                </div>
+                
+                <div class="chat-section">
+                    <h4>💬 Ask Questions About Your Story</h4>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    
+                    <div class="suggested-questions" id="suggestedQuestions">
+                        <strong>Suggested Questions:</strong>
+                        <div id="questionsList"></div>
+                    </div>
+                    
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Ask about characters, themes, plot..." onkeypress="handleChatEnter(event)">
+                        <button onclick="sendChatMessage()" class="preview-btn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="result" class="result-section" style="display: none;">
+            <div class="success-message">
+                <h3>✅ AI-Enhanced Audiobook Generated Successfully!</h3>
+                <div id="emotionResults" class="emotion-results"></div>
+                <div class="audio-player">
+                    <audio controls id="audioPlayer">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+                <div class="text-preview">
+                    <h4>Text Preview:</h4>
+                    <p id="textPreview"></p>
+                </div>
+                <div class="actions">
+                    <a href="#" id="downloadBtn" class="download-btn" download>
+                        📥 Download Audio
+                    </a>
+                    <button onclick="generateAnother()" class="generate-another-btn">
+                        🔄 Generate Another
+                    </button>
+                    <button onclick="showAIChat()" class="preview-btn">
+                        🤖 Analyze Story
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="error" class="error-section" style="display: none;">
+            <div class="error-message">
+                <h3>❌ Error</h3>
+                <p id="errorText"></p>
+                <button onclick="hideError()" class="retry-btn">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="hideLogin()">&times;</span>
+                <h3>Author Login</h3>
+                <div class="login-form">
+                    <input type="text" id="username" placeholder="Username" value="admin">
+                    <input type="password" id="password" placeholder="Password" value="admin123">
+                    <button onclick="performLogin()" class="upload-btn">Login</button>
+                </div>
+                <p><small>Demo credentials: admin / admin123</small></p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <a href="/files" class="files-link">📁 View All Generated Files</a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Global variables for AI features
+        let currentStoryText = '';
+        let currentStoryAnalysis = null;
+        
+        // Initialize AI features when document loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAIFeatures();
+            
+            // Show author-only sections based on data attribute
+            const isAuthor = document.body.getAttribute('data-is-author') === 'true';
+            if (isAuthor) {
+                document.querySelectorAll('.author-only').forEach(el => {
+                    el.style.display = 'block';
+                });
+            }
+        });
+        
+        function initializeAIFeatures() {
+            // Load voice samples for authors
+            if (document.querySelector('.author-only').style.display !== 'none') {
+                loadVoiceSamples();
+            }
+        }
+        
+        function showAIChat() {
+            const aiEnabled = document.getElementById('enableAIFeatures').checked;
+            const aiSection = document.getElementById('aiSection');
+            const aiDisabledMessage = document.getElementById('aiDisabledMessage');
+            const aiEnabledContent = document.getElementById('aiEnabledContent');
+            
+            aiSection.style.display = 'block';
+            
+            if (!aiEnabled) {
+                aiDisabledMessage.style.display = 'block';
+                aiEnabledContent.style.display = 'none';
+                return;
+            }
+            
+            aiDisabledMessage.style.display = 'none';
+            aiEnabledContent.style.display = 'block';
+            
+            if (currentStoryAnalysis) {
+                displayStoryAnalysis(currentStoryAnalysis);
+            }
+        }
+        
+        function displayStoryAnalysis(analysis) {
+            const analysisDiv = document.getElementById('analysisResults');
+            let html = `
+                <div class="analysis-item">
+                    <strong>📝 Word Count:</strong> ${analysis.word_count}
+                </div>
+                <div class="analysis-item">
+                    <strong>📖 Sentences:</strong> ${analysis.sentence_count}
+                </div>
+            `;
+            
+            if (analysis.themes && analysis.themes.length > 0) {
+                html += '<div class="analysis-item"><strong>🎭 Themes:</strong> ';
+                analysis.themes.forEach(theme => {
+                    html += `<span class="theme-tag">${theme.theme.replace('_', ' ')} (${theme.strength})</span> `;
+                });
+                html += '</div>';
+            }
+            
+            if (analysis.characters && analysis.characters.length > 0) {
+                html += `<div class="analysis-item"><strong>👥 Characters:</strong> ${analysis.characters.slice(0, 5).join(', ')}</div>`;
+            }
+            
+            analysisDiv.innerHTML = html;
+        }
+        
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const question = input.value.trim();
+            if (!question || !currentStoryText) return;
+            
+            addChatMessage(question, 'user');
+            input.value = '';
+            
+            // Send to AI
+            fetch('/ask-story', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: currentStoryText,
+                    question: question,
+                    include_analysis: false
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    addChatMessage(data.response.insight, 'ai');
+                } else {
+                    addChatMessage('Sorry, I had trouble analyzing that. Please try rephrasing your question.', 'ai');
+                }
+            })
+            .catch(error => {
+                addChatMessage('Sorry, there was an error processing your question.', 'ai');
+            });
+        }
+        
+        function addChatMessage(message, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.innerHTML = `<strong>${sender === 'user' ? 'You' : 'AI Assistant'}:</strong> ${message}`;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function handleChatEnter(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+        
+        function loadVoiceSamples() {
+            fetch('/get-voice-samples')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayVoiceSamples(data.samples);
+                }
+            })
+            .catch(error => console.log('Voice samples not loaded'));
+        }
+        
+        function displayVoiceSamples(samples) {
+            const samplesDiv = document.getElementById('voiceSamples');
+            if (samples.length === 0) {
+                samplesDiv.innerHTML = '<small>No voice samples uploaded yet</small>';
+                return;
+            }
+            
+            let html = '<h5>Your Voice Samples:</h5>';
+            samples.forEach(sample => {
+                html += `<div class="voice-sample-item">
+                    📎 ${sample.original_name} 
+                    <small>(${new Date(sample.uploaded_at).toLocaleDateString()})</small>
+                </div>`;
+            });
+            samplesDiv.innerHTML = html;
+        }
+        
+        // Login/Logout functions
+        function showLogin() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+        
+        function hideLogin() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+        
+        function performLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            
+            fetch('/login', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Invalid credentials');
+                }
+            });
+        }
+        
+        function logout() {
+            fetch('/logout')
+            .then(() => location.reload());
+        }
+        
+        // Upload voice sample
+        document.getElementById('uploadSampleBtn').addEventListener('click', function() {
+            const fileInput = document.getElementById('voiceSample');
+            if (!fileInput.files[0]) {
+                alert('Please select a voice sample file first.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('voice_sample', fileInput.files[0]);
+            
+            fetch('/upload-voice-sample', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    loadVoiceSamples();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        });
+    </script>
+</body>
+</html> content</option>
+                            <optgroup label="🌍 Popular Languages">
+                                <option value="es">🇪🇸 Spanish</option>
+                                <option value="fr">🇫🇷 French</option>
+                                <option value="de">🇩🇪 German</option>
+                                <option value="it">🇮🇹 Italian</option>
+                                <option value="pt">🇵🇹 Portuguese</option>
+                                <option value="ru">🇷🇺 Russian</option>
+                                <option value="ja">🇯🇵 Japanese</option>
+                                <option value="ko">🇰🇷 Korean</option>
+                                <option value="zh">🇨🇳 Chinese (Simplified)</option>
+                                <option value="ar">🇸🇦 Arabic</option>
+                                <option value="hi">🇮🇳 Hindi</option>
+                                <option value="ta">🇮🇳 Tamil</option>
+                            </optgroup>
+                        </select>
+                        <button type="button" id="detectLangBtn" class="detect-btn" title="Detect document language">
+                            🔍
+                        </button>
+                    </div>
+                    
+                    <div class="setting-group" id="specificVoiceGroup" style="display: none;">
+                        <label for="voiceId">System Voice:</label>
+                        <select id="voiceId" name="voice_id">
+                            <option value="">Loading voices...</option>
+                        </select>
+                        <button type="button" id="refreshVoices" class="refresh-btn" title="Refresh available voices">
+                            🔄
+                        </button>
+                    </div>
+                        <label for="voiceId">System Voice:</label>
+                        <select id="voiceId" name="voice_id">
+                            <option value="">Loading voices...</option>
+                        </select>
+                        <button type="button" id="refreshVoices" class="refresh-btn" title="Refresh available voices">
+                            🔄
+                        </button>
+                    </div>
+                    
+                    <div class="voice-preview">
+                        <small id="voiceDescription">🌿 Warm, natural female voice perfect for emotional storytelling, novels, and intimate narratives</small>
+                        <button type="button" id="previewBtn" class="preview-btn">
+                            🔊 Preview Voice
+                        </button>
+                        <audio id="previewPlayer" style="display: none;" controls>
+                            Your browser does not support audio playback.
+                        </audio>
+                    </div>
+                </div>
+
+                <button type="submit" class="upload-btn" id="uploadBtn">
+                    <span class="btn-text">Generate Audiobook</span>
+                    <span class="spinner" id="spinner"></span>
+                </button>
+            </form>
+        </div>
+
+        <div id="result" class="result-section" style="display: none;">
+            <div class="success-message">
+                <h3>✅ Audiobook Generated Successfully!</h3>
+                <div class="audio-player">
+                    <audio controls id="audioPlayer">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+                <div class="text-preview">
+                    <h4>Text Preview:</h4>
+                    <p id="textPreview"></p>
+                </div>
+                <div class="actions">
+                    <a href="#" id="downloadBtn" class="download-btn" download>
+                        📥 Download Audio
+                    </a>
+                    <button onclick="generateAnother()" class="generate-another-btn">
+                        🔄 Generate Another
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="error" class="error-section" style="display: none;">
+            <div class="error-message">
+                <h3>❌ Error</h3>
+                <p id="errorText"></p>
+                <button onclick="hideError()" class="retry-btn">Try Again</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <a href="/files" class="files-link">📁 View All Generated Files</a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

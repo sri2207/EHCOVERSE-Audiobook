@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - AI-Enhanced Audiobook Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_new.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.css">
+</head>
+<body>
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--color-surface);">
+        <div class="container" style="max-width: 600px; text-align: center;">
+            <div style="background: var(--color-background); padding: var(--spacing-8); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);">
+                
+                <!-- Error Icon -->
+                <div style="width: 4rem; height: 4rem; background: var(--color-error); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--spacing-6); color: white;">
+                    <i data-lucide="alert-triangle" style="width: 2rem; height: 2rem;"></i>
+                </div>
+                
+                <!-- Error Title -->
+                <h1 style="color: var(--color-error); margin-bottom: var(--spacing-4);">
+                    {{ error or "Something went wrong" }}
+                </h1>
+                
+                <!-- Error Message -->
+                <p style="color: var(--color-text-secondary); margin-bottom: var(--spacing-8); font-size: var(--font-size-lg);">
+                    {{ message or "We encountered an unexpected error. Please try again or contact support if the problem persists." }}
+                </p>
+                
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: var(--spacing-4); justify-content: center; flex-wrap: wrap;">
+                    <a href="{{ url_for('index') }}" class="btn-primary">
+                        <i data-lucide="home"></i>
+                        Go Home
+                    </a>
+                    
+                    <button onclick="history.back()" class="btn-secondary">
+                        <i data-lucide="arrow-left"></i>
+                        Go Back
+                    </button>
+                    
+                    <button onclick="window.location.reload()" class="btn-secondary">
+                        <i data-lucide="refresh-cw"></i>
+                        Reload Page
+                    </button>
+                </div>
+                
+                <!-- Additional Help -->
+                <div style="margin-top: var(--spacing-8); padding: var(--spacing-4); background: var(--color-surface); border-radius: var(--radius-lg);">
+                    <p style="font-size: var(--font-size-sm); color: var(--color-text-muted); margin: 0;">
+                        If you continue to experience issues, please check your file format and size, 
+                        or try refreshing the page. For technical support, ensure all required services are running.
+                    </p>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        lucide.createIcons();
+        
+        // Set theme from localStorage
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+</body>
+</html>

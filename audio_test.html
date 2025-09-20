@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EchoVerse Audio Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .audio-player {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .file-list {
+            margin: 20px 0;
+        }
+        .file-item {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #eee;
+            border-radius: 3px;
+            background-color: #fff;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>EchoVerse Audio Test</h1>
+    
+    <div class="file-list">
+        <h2>Available Audio Files</h2>
+        <div id="fileList">
+            <p>Loading...</p>
+        </div>
+    </div>
+    
+    <div class="audio-player">
+        <h2>Audio Player</h2>
+        <audio id="audioPlayer" controls style="width: 100%;">
+            Your browser does not support the audio element.
+        </audio>
+        <div id="playerInfo"></div>
+    </div>
+    
+    <script>
+        // Function to load and display available audio files
+        async function loadAudioFiles() {
+            try {
+                const response = await fetch('/files');
+                const html = await response.text();
+                
+                // Parse the HTML to extract file information
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const fileItems = doc.querySelectorAll('.file-item');
+                
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '';
+                
+                if (fileItems.length === 0) {
+                    fileList.innerHTML = '<p>No audio files found.</p>';
+                    return;
+                }
+                
+                fileItems.forEach(item => {
+                    const clone = item.cloneNode(true);
+                    const playButton = document.createElement('button');
+                    playButton.textContent = 'Play';
+                    playButton.onclick = () => playAudio(item.dataset.filename);
+                    clone.appendChild(playButton);
+                    fileList.appendChild(clone);
+                });
+            } catch (error) {
+                console.error('Error loading audio files:', error);
+                document.getElementById('fileList').innerHTML = '<p>Error loading files: ' + error.message + '</p>';
+            }
+        }
+        
+        // Function to play an audio file
+        function playAudio(filename) {
+            const audioPlayer = document.getElementById('audioPlayer');
+            const playerInfo = document.getElementById('playerInfo');
+            
+            // Construct the URL to serve the audio file
+            const audioUrl = '/api/download/' + encodeURIComponent(filename);
+            
+            audioPlayer.src = audioUrl;
+            playerInfo.innerHTML = '<p>Playing: ' + filename + '</p>';
+            
+            // Attempt to play
+            audioPlayer.play()
+                .then(() => {
+                    playerInfo.innerHTML += '<p style="color: green;">Audio is playing...</p>';
+                })
+                .catch(error => {
+                    playerInfo.innerHTML += '<p style="color: red;">Error playing audio: ' + error.message + '</p>';
+                    console.error('Error playing audio:', error);
+                });
+        }
+        
+        // Load files when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAudioFiles();
+        });
+    </script>
+</body>
+</html>

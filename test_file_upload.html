@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EchoVerse File Upload Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+        }
+        h1 { color: #2c3e50; text-align: center; }
+        .upload-area { 
+            border: 2px dashed #3498db; 
+            border-radius: 5px; 
+            padding: 30px; 
+            text-align: center; 
+            margin: 20px 0; 
+            background-color: #ecf0f1;
+        }
+        .file-info { 
+            background-color: #e8f4f8; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin: 15px 0; 
+        }
+        button { 
+            background-color: #3498db; 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+        }
+        button:hover { background-color: #2980b9; }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        .status { 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin: 15px 0; 
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        select, input { 
+            padding: 10px; 
+            margin: 5px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎧 EchoVerse Audiobook Creator</h1>
+        <p style="text-align: center; color: #7f8c8d;">
+            Upload TXT, PDF, DOCX, or HTML files to create audiobooks
+        </p>
+        
+        <div class="upload-area">
+            <h2>📁 Upload Your Document</h2>
+            <input type="file" id="fileInput" accept=".txt,.pdf,.docx,.html,.htm">
+            <p>Supported formats: TXT, PDF, DOCX, HTML</p>
+        </div>
+        
+        <div class="file-info" id="fileInfo" style="display: none;">
+            <h3>📄 File Information</h3>
+            <p><strong>Name:</strong> <span id="fileName"></span></p>
+            <p><strong>Type:</strong> <span id="fileType"></span></p>
+            <p><strong>Size:</strong> <span id="fileSize"></span></p>
+        </div>
+        
+        <div style="background-color: #fff8e1; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h3>🔊 Voice Settings</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <label for="voiceType">Voice Type:</label><br>
+                    <select id="voiceType">
+                        <option value="female_warm">👩 Female (Warm)</option>
+                        <option value="male_deep">👨 Male (Deep)</option>
+                        <option value="cheerful_energetic">😊 Cheerful</option>
+                        <option value="mysterious_storyteller">🕵️ Mysterious</option>
+                        <option value="romantic_dreamer">💕 Romantic</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="targetLanguage">Language:</label><br>
+                    <select id="targetLanguage">
+                        <option value="en">🇺🇸 English</option>
+                        <option value="es">🇪🇸 Spanish</option>
+                        <option value="fr">🇫🇷 French</option>
+                        <option value="de">🇩🇪 German</option>
+                        <option value="it">🇮🇹 Italian</option>
+                        <option value="pt">🇵🇹 Portuguese</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="voiceRate">Speed:</label><br>
+                    <input type="range" id="voiceRate" min="50" max="300" value="175">
+                    <span id="rateValue">175</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button id="uploadBtn" onclick="uploadFile()" disabled>🚀 Create Audiobook</button>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div id="result" style="display: none;">
+            <h3>🎉 Audiobook Generated!</h3>
+            <div class="file-info">
+                <p><strong>Text Preview:</strong></p>
+                <p id="textPreview"></p>
+            </div>
+            <div style="text-align: center;">
+                <button onclick="playAudio()">▶️ Play Audiobook</button>
+                <button onclick="downloadAudio()">📥 Download Audiobook</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        
+        // Update rate value display
+        document.getElementById('voiceRate').addEventListener('input', function() {
+            document.getElementById('rateValue').textContent = this.value;
+        });
+        
+        // Handle file selection
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                document.getElementById('uploadBtn').disabled = false;
+                
+                // Display file info
+                document.getElementById('fileName').textContent = selectedFile.name;
+                document.getElementById('fileType').textContent = selectedFile.type || 'Unknown';
+                document.getElementById('fileSize').textContent = (selectedFile.size / 1024).toFixed(2) + ' KB';
+                document.getElementById('fileInfo').style.display = 'block';
+            } else {
+                selectedFile = null;
+                document.getElementById('uploadBtn').disabled = true;
+                document.getElementById('fileInfo').style.display = 'none';
+            }
+        });
+        
+        async function uploadFile() {
+            if (!selectedFile) {
+                showStatus('Please select a file first', 'error');
+                return;
+            }
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '🔄 Processing...';
+            
+            showStatus('Uploading and processing your file...', 'info');
+            
+            try {
+                // In a real implementation, this would upload to your Flask endpoint
+                // For this demo, we'll simulate the process
+                await simulateFileProcessing();
+                
+                showStatus('✅ Audiobook created successfully!', 'success');
+                
+                // Show result section
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('textPreview').textContent = 
+                    `This is a preview of the text extracted from your ${selectedFile.name} file. ` +
+                    `The full content has been processed and converted to an audiobook with your selected settings.`;
+                
+                uploadBtn.textContent = '🚀 Create Audiobook';
+                
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, 'error');
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '🚀 Create Audiobook';
+            }
+        }
+        
+        function simulateFileProcessing() {
+            return new Promise((resolve) => {
+                // Simulate processing time
+                setTimeout(() => {
+                    resolve();
+                }, 2000);
+            });
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+            statusDiv.style.display = 'block';
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        function playAudio() {
+            showStatus('▶️ Playing audiobook simulation...', 'info');
+            // In a real implementation, this would play the actual audio
+        }
+        
+        function downloadAudio() {
+            showStatus('📥 Downloading audiobook...', 'info');
+            // In a real implementation, this would download the actual audio file
+            setTimeout(() => {
+                showStatus('✅ Audiobook downloaded successfully!', 'success');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

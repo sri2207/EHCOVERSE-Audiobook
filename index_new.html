@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Enhanced Audiobook Generator</title>
+    <meta name="description" content="Transform your documents into professional audiobooks with AI-powered voice synthesis and emotion analysis">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.css">
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_new.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="brand-icon">
+                    <i data-lucide="headphones"></i>
+                </div>
+                <h1 class="brand-title">AudioBook AI</h1>
+            </div>
+            
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <i data-lucide="sun" class="theme-icon-light"></i>
+                    <i data-lucide="moon" class="theme-icon-dark"></i>
+                </button>
+                
+                <div class="status-indicator" id="statusIndicator">
+                    <div class="status-dot status-healthy"></div>
+                    <span class="status-text">Ready</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="container">
+                <div class="hero-content">
+                    <h2 class="hero-title">Transform Documents into <span class="gradient-text">AI-Enhanced Audiobooks</span></h2>
+                    <p class="hero-description">
+                        Upload your documents and experience professional-quality text-to-speech with emotion analysis, 
+                        multilingual support, and natural voice synthesis.
+                    </p>
+                    
+                    <div class="feature-badges">
+                        <div class="badge">
+                            <i data-lucide="brain"></i>
+                            <span>AI-Powered</span>
+                        </div>
+                        <div class="badge">
+                            <i data-lucide="globe"></i>
+                            <span>80+ Languages</span>
+                        </div>
+                        <div class="badge">
+                            <i data-lucide="zap"></i>
+                            <span>Emotion Analysis</span>
+                        </div>
+                        <div class="badge">
+                            <i data-lucide="mic"></i>
+                            <span>Natural Voices</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Processing Workflow -->
+        <section class="workflow-section">
+            <div class="container">
+                <div class="workflow-container">
+                    
+                    <!-- Step 1: File Upload -->
+                    <div class="workflow-step" id="step1">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h3 class="step-title">Upload Document</h3>
+                            <div class="step-status">
+                                <i data-lucide="upload" class="step-icon"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="step-content">
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-icon">
+                                    <i data-lucide="file-plus"></i>
+                                </div>
+                                <div class="upload-text">
+                                    <h4>Choose your document</h4>
+                                    <p>Drag & drop or click to select</p>
+                                    <small>Supports PDF, DOCX, TXT files (max 16MB)</small>
+                                </div>
+                                <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.html" hidden>
+                                <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">
+                                    Select File
+                                </button>
+                            </div>
+                            
+                            <div class="file-info" id="fileInfo" style="display: none;">
+                                <div class="file-details">
+                                    <div class="file-icon">
+                                        <i data-lucide="file-text"></i>
+                                    </div>
+                                    <div class="file-meta">
+                                        <div class="file-name" id="fileName"></div>
+                                        <div class="file-stats" id="fileStats"></div>
+                                    </div>
+                                    <button class="btn-icon" onclick="removeFile()" aria-label="Remove file">
+                                        <i data-lucide="x"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="processing-progress" id="uploadProgress" style="display: none;">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill"></div>
+                                    </div>
+                                    <span class="progress-text">Processing document...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Language & Translation -->
+                    <div class="workflow-step" id="step2">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h3 class="step-title">Language & Translation</h3>
+                            <div class="step-status">
+                                <i data-lucide="languages" class="step-icon"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="step-content">
+                            <div class="language-detection" id="languageDetection" style="display: none;">
+                                <div class="detection-result">
+                                    <div class="detection-info">
+                                        <i data-lucide="search"></i>
+                                        <div>
+                                            <div class="detected-language" id="detectedLanguage"></div>
+                                            <div class="detection-confidence" id="detectionConfidence"></div>
+                                        </div>
+                                    </div>
+                                    <button class="btn-secondary btn-sm" id="detectLanguageBtn" onclick="detectLanguage()">
+                                        <i data-lucide="refresh-cw"></i>
+                                        Re-detect
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="language-selection">
+                                <div class="form-group">
+                                    <label for="targetLanguage">Target Language</label>
+                                    <select id="targetLanguage" class="form-select">
+                                        <option value="en">English</option>
+                                        <option value="es">Spanish</option>
+                                        <option value="fr">French</option>
+                                        <option value="de">German</option>
+                                        <option value="it">Italian</option>
+                                        <option value="pt">Portuguese</option>
+                                        <option value="ru">Russian</option>
+                                        <option value="zh">Chinese</option>
+                                        <option value="ja">Japanese</option>
+                                        <option value="ko">Korean</option>
+                                        <option value="ar">Arabic</option>
+                                        <option value="hi">Hindi</option>
+                                        <option value="ta">Tamil</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="translation-options" id="translationOptions" style="display: none;">
+                                    <button class="btn-primary" id="translateBtn" onclick="translateText()">
+                                        <i data-lucide="arrow-right"></i>
+                                        Translate Text
+                                    </button>
+                                    <div class="translation-progress" id="translationProgress" style="display: none;">
+                                        <div class="spinner"></div>
+                                        <span>Translating...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Text Analysis -->
+                    <div class="workflow-step" id="step3">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h3 class="step-title">Text Analysis</h3>
+                            <div class="step-status">
+                                <i data-lucide="brain" class="step-icon"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="step-content">
+                            <div class="text-preview" id="textPreview" style="display: none;">
+                                <h4>Document Content</h4>
+                                <div class="preview-container">
+                                    <div class="preview-text" id="previewText"></div>
+                                    <div class="preview-controls">
+                                        <button class="btn-icon" onclick="togglePreview()" id="previewToggle">
+                                            <i data-lucide="eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="analysis-results" id="analysisResults" style="display: none;">
+                                <div class="analysis-grid">
+                                    <div class="analysis-card">
+                                        <div class="analysis-header">
+                                            <i data-lucide="heart"></i>
+                                            <h5>Emotion</h5>
+                                        </div>
+                                        <div class="emotion-result">
+                                            <div class="emotion-primary" id="primaryEmotion"></div>
+                                            <div class="emotion-intensity" id="emotionIntensity"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="analysis-card">
+                                        <div class="analysis-header">
+                                            <i data-lucide="book-open"></i>
+                                            <h5>Genre</h5>
+                                        </div>
+                                        <div class="genre-tags" id="genreTags"></div>
+                                    </div>
+                                    
+                                    <div class="analysis-card">
+                                        <div class="analysis-header">
+                                            <i data-lucide="bar-chart"></i>
+                                            <h5>Statistics</h5>
+                                        </div>
+                                        <div class="stats-grid" id="textStats"></div>
+                                    </div>
+                                </div>
+                                
+                                <button class="btn-secondary" onclick="analyzeText()">
+                                    <i data-lucide="refresh-cw"></i>
+                                    Re-analyze
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Voice Configuration -->
+                    <div class="workflow-step" id="step4">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h3 class="step-title">Voice Settings</h3>
+                            <div class="step-status">
+                                <i data-lucide="settings" class="step-icon"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="step-content">
+                            <div class="voice-configuration">
+                                <div class="config-grid">
+                                    <div class="form-group">
+                                        <label for="voiceSelect">Voice</label>
+                                        <select id="voiceSelect" class="form-select">
+                                            <option value="">Select a voice...</option>
+                                        </select>
+                                        <button class="btn-icon voice-preview" onclick="previewVoice()" id="previewVoiceBtn">
+                                            <i data-lucide="play"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="voiceSpeed">Speed</label>
+                                        <div class="slider-group">
+                                            <input type="range" id="voiceSpeed" min="80" max="250" value="180" class="form-slider">
+                                            <span class="slider-value" id="speedValue">180 WPM</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="voiceVolume">Volume</label>
+                                        <div class="slider-group">
+                                            <input type="range" id="voiceVolume" min="0.1" max="1" step="0.1" value="0.9" class="form-slider">
+                                            <span class="slider-value" id="volumeValue">90%</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="voicePersonality">Personality</label>
+                                        <select id="voicePersonality" class="form-select">
+                                            <option value="narrator">Narrator</option>
+                                            <option value="storyteller">Storyteller</option>
+                                            <option value="character_energetic">Energetic</option>
+                                            <option value="character_calm">Calm</option>
+                                            <option value="character_wise">Wise</option>
+                                            <option value="character_mysterious">Mysterious</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="advanced-options" id="advancedOptions">
+                                    <button class="btn-text" onclick="toggleAdvanced()">
+                                        <i data-lucide="chevron-down" id="advancedToggleIcon"></i>
+                                        Advanced Options
+                                    </button>
+                                    
+                                    <div class="advanced-content" id="advancedContent" style="display: none;">
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="continuousFlow" checked>
+                                                <span class="checkbox-label">Continuous Flow</span>
+                                            </label>
+                                            <small>Creates smooth, natural speech without formal pauses</small>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="emotionEnhancement" checked>
+                                                <span class="checkbox-label">Emotion Enhancement</span>
+                                            </label>
+                                            <small>Adjusts voice based on detected emotions</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Generate Audiobook -->
+                    <div class="workflow-step" id="step5">
+                        <div class="step-header">
+                            <div class="step-number">5</div>
+                            <h3 class="step-title">Generate Audiobook</h3>
+                            <div class="step-status">
+                                <i data-lucide="play" class="step-icon"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="step-content">
+                            <div class="generation-controls">
+                                <div class="form-group">
+                                    <label for="audiobookName">Audiobook Name</label>
+                                    <input type="text" id="audiobookName" class="form-input" placeholder="Enter audiobook name">
+                                </div>
+                                
+                                <button class="btn-primary btn-lg" id="generateBtn" onclick="generateAudiobook()">
+                                    <i data-lucide="mic"></i>
+                                    Generate Audiobook
+                                </button>
+                            </div>
+                            
+                            <div class="generation-progress" id="generationProgress" style="display: none;">
+                                <div class="progress-container">
+                                    <div class="progress-circle">
+                                        <svg class="progress-ring" width="120" height="120">
+                                            <circle class="progress-ring-background" cx="60" cy="60" r="54"></circle>
+                                            <circle class="progress-ring-fill" cx="60" cy="60" r="54" id="progressRing"></circle>
+                                        </svg>
+                                        <div class="progress-percentage" id="progressPercentage">0%</div>
+                                    </div>
+                                    <div class="progress-info">
+                                        <h4>Generating Your Audiobook</h4>
+                                        <div class="progress-steps">
+                                            <div class="progress-step active" id="progressStep1">
+                                                <i data-lucide="file-text"></i>
+                                                <span>Processing text</span>
+                                            </div>
+                                            <div class="progress-step" id="progressStep2">
+                                                <i data-lucide="brain"></i>
+                                                <span>Analyzing emotions</span>
+                                            </div>
+                                            <div class="progress-step" id="progressStep3">
+                                                <i data-lucide="mic"></i>
+                                                <span>Synthesizing speech</span>
+                                            </div>
+                                            <div class="progress-step" id="progressStep4">
+                                                <i data-lucide="check"></i>
+                                                <span>Finalizing audio</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="generation-result" id="generationResult" style="display: none;">
+                                <div class="result-success">
+                                    <div class="success-icon">
+                                        <i data-lucide="check-circle"></i>
+                                    </div>
+                                    <h4>Audiobook Generated Successfully!</h4>
+                                    <div class="result-info" id="resultInfo"></div>
+                                    
+                                    <div class="result-actions">
+                                        <button class="btn-primary" id="downloadBtn">
+                                            <i data-lucide="download"></i>
+                                            Download Audiobook
+                                        </button>
+                                        <button class="btn-secondary" onclick="playPreview()" id="playPreviewBtn">
+                                            <i data-lucide="play"></i>
+                                            Preview
+                                        </button>
+                                        <button class="btn-text" onclick="resetWorkflow()">
+                                            <i data-lucide="refresh-cw"></i>
+                                            Start New
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="brand-icon">
+                        <i data-lucide="headphones"></i>
+                    </div>
+                    <span>AudioBook AI</span>
+                </div>
+                
+                <div class="footer-info">
+                    <span>Powered by AI • Built with ❤️</span>
+                </div>
+                
+                <div class="footer-stats" id="footerStats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="languageCount">{{ supported_languages|length if supported_languages else 0 }}</span>
+                        <span class="stat-label">Languages</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="voiceCount">{{ available_voices|length if available_voices else 0 }}</span>
+                        <span class="stat-label">Voices</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loadingText">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="{{ url_for('static', filename='script_new.js') }}"></script>
+    
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+    
+    <!-- Initialize app data safely -->
+    <script type="application/json" id="app-data">
+    {
+        "serviceStatus": {{ (service_status or {})|tojson|safe }},
+        "availableVoices": {{ (available_voices or [])|tojson|safe }},
+        "supportedLanguages": {{ (supported_languages or [])|tojson|safe }},
+        "config": {{ (config or {})|tojson|safe }}
+    }
+    </script>
+    
+    <script>
+        // Initialize app with server data safely
+        try {
+            const appDataElement = document.getElementById('app-data');
+            window.appData = appDataElement ? JSON.parse(appDataElement.textContent) : {};
+            
+            // Ensure all required properties exist with safe defaults
+            if (!window.appData.serviceStatus) window.appData.serviceStatus = {};
+            if (!Array.isArray(window.appData.availableVoices)) window.appData.availableVoices = [];
+            if (!Array.isArray(window.appData.supportedLanguages)) window.appData.supportedLanguages = [];
+            if (!window.appData.config) window.appData.config = {};
+        } catch (error) {
+            console.error('Failed to initialize app data:', error);
+            // Fallback to safe defaults
+            window.appData = {
+                serviceStatus: {},
+                availableVoices: [],
+                supportedLanguages: [],
+                config: {}
+            };
+        }
+    </script>
+</body>
+</html>
